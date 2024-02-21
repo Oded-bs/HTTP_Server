@@ -173,7 +173,7 @@ void* do_work(void* p)
         if(thread_pool->shutdown == 1)
         {
             pthread_mutex_unlock(&thread_pool->qlock);
-            return NULL;
+            pthread_exit(NULL);
         }
 
         work_t* current_job = thread_pool->qhead;
