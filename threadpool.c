@@ -259,6 +259,5 @@ int main(int argc,char* argv[])
             break;
         }
     }
-    printf("Total tasks completed: %d\n",tasks_dispatched);
     return 0;
 }
