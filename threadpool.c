@@ -9,6 +9,7 @@
 #define MEMORY_ALLOCATION 3
 #define PTHREAD_CREATE 4
 #define SLEEPING_TIME_MILISECONDS 100000
+#define PRINTS_AMOUNT 1000
 /**Error Function: gets: int - cause of the error, pointers to the threadpool, and the threads tehmself. will free those pointers if not NULL
  * error format is perror. the cause options are as follows: 1 - Mutex Init, 2-Condition_Init, 3-Memory_Allocation, 4-Pthread_Create
 */
@@ -234,7 +235,7 @@ void destroy_threadpool(threadpool* destroyme)
 void *PrintMyID(void *arg)
 {
     pthread_t thread_id = pthread_self();
-    for (int i = 0; i<1 ; i++)
+    for (int i = 0; i<PRINTS_AMOUNT ; i++)
     {
         printf("Thread ID: %lu\n",thread_id);
         usleep(SLEEPING_TIME_MILISECONDS);
