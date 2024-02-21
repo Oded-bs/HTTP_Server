@@ -51,7 +51,7 @@ int inputIsValid(int arguments_amount,char* argv[])
     }
     return 1;
 }
-
+/**Function that Init the threadpool and its fields, program will free Memory/Pthreads variables on error*/
 threadpool* create_threadpool(int num_threads_in_pool)
 {
     threadpool* tp = (threadpool*)calloc(1,sizeof(threadpool));
@@ -104,7 +104,13 @@ threadpool* create_threadpool(int num_threads_in_pool)
     }
     return tp;
 }
-
+/**Creates new task and adds it to the Queue.
+ * Steps: 
+ * 1. we lock the mutex
+ * 2.we create the task
+ * 3. we add it to the queue
+ * 4. signal to the waiting threads with q_not_empty 
+ * 5. unlock mutex*/
 void dispatch(threadpool* from_me, dispatch_fn dispatch_to_here, void *arg)
 {
     pthread_mutex_lock(&from_me->qlock);
@@ -138,7 +144,15 @@ void dispatch(threadpool* from_me, dispatch_fn dispatch_to_here, void *arg)
     pthread_mutex_unlock(&from_me->qlock);
     return;
 }
-
+/**Function where our pthread lives. will exit only if shutdown is activated.
+ * Steps:
+ * 1. Lock Mutex
+ * 2. Check the Queue size, if its 0 and shutdown is off the thread will wait on q_not_empty condition.
+ * 3. Check if the shutdown was activated while the thread slept, if yes we exit the thread.
+ * 4. We Dequeue a task from our queue.
+ * 5. Start Routine.
+ * 6. Unlock Mutex
+*/
 void* do_work(void* p)
 {
     threadpool *thread_pool = (threadpool*) p;
@@ -176,6 +190,15 @@ void* do_work(void* p)
     }
 }
 
+/**Destroy our threadpool
+ * Steps:
+ * 1. Lock Mutex
+ * 2. Activate dont_accept
+ * 3. Wait until the queue is empty
+ * 4. Activate Shutdown
+ * 5. Waiting on all the threads to complete the tasks
+ * 6. Destory all the Pthread variables and free the threadpool
+*/
 void destroy_threadpool(threadpool* destroyme)
 {
     pthread_mutex_lock(&destroyme->qlock);
@@ -200,7 +223,9 @@ void destroy_threadpool(threadpool* destroyme)
     free(destroyme->threads);
     free(destroyme);
 }
-
+/**This is the function the thread is using what we call Task
+ * Prints the Thread ID 1000 times.
+*/
 void *printme(void *arg)
 {
     pthread_t tid = pthread_self();
