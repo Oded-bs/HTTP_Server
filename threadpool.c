@@ -4,6 +4,11 @@
 #include <unistd.h>
 #include "threadpool.h"
 
+#define MUTEX_INIT 1
+#define PTHREAD_COND 2
+#define MEMORY_ALLOCATION 3
+#define PTHREAD_CREATE 4
+#define SLEEPING_TIME_MILISECONDS 100000
 /**Error Function: gets: int - cause of the error, pointers to the threadpool, and the threads tehmself. will free those pointers if not NULL
  * error format is perror. the cause options are as follows: 1 - Mutex Init, 2-Condition_Init, 3-Memory_Allocation, 4-Pthread_Create
 */
@@ -57,7 +62,7 @@ threadpool* create_threadpool(int num_threads_in_pool)
     threadpool* tp = (threadpool*)calloc(1,sizeof(threadpool));
     if(!tp)
     {
-        errorFunc(3,NULL,NULL);
+        errorFunc(MEMORY_ALLOCATION,NULL,NULL);
         exit(EXIT_FAILURE);
     }
     tp->num_threads = num_threads_in_pool;
@@ -65,19 +70,19 @@ threadpool* create_threadpool(int num_threads_in_pool)
     tp->threads = (pthread_t*)calloc(num_threads_in_pool,sizeof(pthread_t));
     if(!tp->threads)
     {
-        errorFunc(3,tp,NULL);
+        errorFunc(MEMORY_ALLOCATION,tp,NULL);
         exit(EXIT_FAILURE);
     }
     tp->qhead = tp->qtail = NULL;
     if(pthread_mutex_init(&tp->qlock,NULL))
     {
-        errorFunc(1,tp,tp->threads);
+        errorFunc(MUTEX_INIT,tp,tp->threads);
         exit(EXIT_FAILURE);
     }
     if(pthread_cond_init(&tp->q_not_empty,NULL))
     {
         pthread_mutex_destroy(&tp->qlock);
-        errorFunc(2,tp,tp->threads);
+        errorFunc(PTHREAD_COND,tp,tp->threads);
         exit(EXIT_FAILURE);
     }
 
@@ -85,7 +90,7 @@ threadpool* create_threadpool(int num_threads_in_pool)
     {
         pthread_mutex_destroy(&tp->qlock);
         pthread_cond_destroy(&tp->q_not_empty);
-        errorFunc(2,tp,tp->threads);
+        errorFunc(PTHREAD_COND,tp,tp->threads);
         exit(EXIT_FAILURE);
     }
     tp->shutdown = 0;
@@ -97,7 +102,7 @@ threadpool* create_threadpool(int num_threads_in_pool)
             pthread_mutex_destroy(&tp->qlock);
             pthread_cond_destroy(&tp->q_empty);
             pthread_cond_destroy(&tp->q_not_empty);
-            errorFunc(4,tp,tp->threads);
+            errorFunc(PTHREAD_CREATE,tp,tp->threads);
             exit(EXIT_FAILURE);
 
         }
@@ -125,7 +130,7 @@ void dispatch(threadpool* from_me, dispatch_fn dispatch_to_here, void *arg)
         pthread_mutex_destroy(&from_me->qlock);
         pthread_cond_destroy(&from_me->q_empty);
         pthread_cond_destroy(&from_me->q_not_empty);
-        errorFunc(3,from_me,from_me->threads);
+        errorFunc(MEMORY_ALLOCATION,from_me,from_me->threads);
         exit(EXIT_FAILURE);
     }
     work->routine = dispatch_to_here;
@@ -226,13 +231,13 @@ void destroy_threadpool(threadpool* destroyme)
 /**This is the function the thread is using what we call Task
  * Prints the Thread ID 1000 times.
 */
-void *printme(void *arg)
+void *PrintMyID(void *arg)
 {
-    pthread_t tid = pthread_self();
+    pthread_t thread_id = pthread_self();
     for (int i = 0; i<1 ; i++)
     {
-        printf("Thread ID: %lu\n",tid);
-        usleep(100000);
+        printf("Thread ID: %lu\n",thread_id);
+        usleep(SLEEPING_TIME_MILISECONDS);
     }
     return NULL;
 }
@@ -251,7 +256,7 @@ int main(int argc,char* argv[])
         if(tasks_dispatched < number_of_tasks)
         {
             tasks_dispatched++;
-            dispatch(tp,(void *)printme,NULL);
+            dispatch(tp,(void *)PrintMyID,NULL);
         }
         if(tasks_dispatched == max_number_of_request)
         {
