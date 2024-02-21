@@ -229,7 +229,7 @@ void destroy_threadpool(threadpool* destroyme)
 void *printme(void *arg)
 {
     pthread_t tid = pthread_self();
-    for (int i = 0; i<10 ; i++)
+    for (int i = 0; i<1 ; i++)
     {
         printf("Thread ID: %lu\n",tid);
         usleep(100000);
@@ -244,18 +244,21 @@ int main(int argc,char* argv[])
     {
         exit(1);
     }
-    int pool_size = atoi(argv[1]), number_of_tasks = atoi(argv[2]),max_number_of_request = atoi(argv[3]);
-    int 
+    int pool_size = atoi(argv[1]), number_of_tasks = atoi(argv[2]),max_number_of_request = atoi(argv[3]), tasks_dispatched = 0;
     tp=create_threadpool(pool_size);
-    for (int i = 0; i < number_of_tasks; i++)
+    while(1)
     {
-        printf("i=%d, max_number_of_request =%d\n",i,max_number_of_request);
-        if(i == max_number_of_request)
+        if(tasks_dispatched < number_of_tasks)
         {
+            tasks_dispatched++;
+            dispatch(tp,(void *)printme,NULL);
+        }
+        if(tasks_dispatched == max_number_of_request)
+        {
+            destroy_threadpool(tp);
             break;
         }
-        dispatch(tp,(void *)printme,NULL);
     }
-    destroy_threadpool(tp);
+    printf("Total tasks completed: %d\n",tasks_dispatched);
     return 0;
 }
