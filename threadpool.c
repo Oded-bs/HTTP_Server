@@ -25,16 +25,16 @@ void errorFunc(int cause,threadpool *tp,pthread_t* threads)
     }
     switch (cause)
     {
-    case 1:
+    case MUTEX_INIT:
         perror("Pthread_Mutex_Init\n");
         break;
-    case 2:
+    case PTHREAD_COND:
         perror("Pthread_Cond_Init\n");
         break;
-    case 3:
+    case MEMORY_ALLOCATION:
         perror("Allocation Failed\n");
         break;
-    case 4:
+    case PTHREAD_CREATE:
         perror("Pthread_Create\n");
         break;
     }
