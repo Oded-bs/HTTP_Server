@@ -50,7 +50,8 @@ int inputIsValid(int arguments_amount,char* argv[])
     }
     int pool_size = atoi(argv[1]);
     int number_of_tasks = atoi(argv[2]);
-    if(pool_size < 1 || pool_size > MAXT_IN_POOL || number_of_tasks < 0)
+    int max_number_of_request = atoi(argv[3]);
+    if(pool_size < 1 || pool_size > MAXT_IN_POOL || number_of_tasks < 0 || max_number_of_request < 1)
     {
         printf("Usage: pool <pool-size> <number-of-tasks> <max-number-of-request>\n");
         return 0;
@@ -116,7 +117,8 @@ threadpool* create_threadpool(int num_threads_in_pool)
  * 2.we create the task
  * 3. we add it to the queue
  * 4. signal to the waiting threads with q_not_empty 
- * 5. unlock mutex*/
+ * 5. unlock mutex
+ * */
 void dispatch(threadpool* from_me, dispatch_fn dispatch_to_here, void *arg)
 {
     pthread_mutex_lock(&from_me->qlock);
@@ -186,7 +188,7 @@ void* do_work(void* p)
                 pthread_cond_signal(&thread_pool->q_empty);
             }
         }
-        else if(thread_pool->qsize > 0)
+        else
         {
             thread_pool->qhead = thread_pool-> qhead->next;
         }
